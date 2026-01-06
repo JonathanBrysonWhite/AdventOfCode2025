@@ -403,7 +403,57 @@ namespace AdventOfCode25.Solutions
                 WriteMatrix(matrix);
                 Console.WriteLine();
                 ReduceToRref(matrix);
+                SolveSystem(matrix);
             }
+        }
+
+        public static int SolveSystem(int[][] matrix)
+        {
+            int[] freeVariables = GetFreeVariables(matrix);
+            Console.WriteLine();
+            WriteArray(freeVariables);
+            Console.WriteLine();
+
+            // At this point we have a matrix describing the effect of button press on the left and the target values on the RHS
+            // Each free variable can be iterated from 0 -> f1 + f2 + .... + fn  s/t the target joltages are not exceeded by this number of button presses
+            // Traversing the space of free variable values is similar to traversing a graph, so A* can be used
+            // In this case a "node" is described by a complete set of free variable values and the adjacent nodes would be the set of 
+            // sets of free button presses with exactly one value incremented by one
+            //
+            // initialize priority queue of free variable value arrays and populate it with starting value of [0, 0, .... , 0]
+            // 
+            // we have constraints that each variable must have value >= 0 - so we can enforce this constraint byh doing the following:
+            // for each row in our matrix that has a free variable, we can take that row, solve for one of the bound variables, and get constraints on our remaining variables, 
+            // and (hopefully) get constraints on our free variables this way
+            // for each next candidate, we can 
+            return 0;
+        }
+
+        public static int[] GetFreeVariables(int[][] matrix)
+        {
+            int m = matrix.Length;
+            int n = matrix[0].Length - 1;
+
+            int[] freeVariableArray = new int[n];
+            int i = 0, j = 0;
+            while(i < m && j < n)
+            {
+                if (matrix[i][j] != 0)
+                {
+                    i++;
+                }
+                else
+                {
+                    freeVariableArray[j] = 1;
+                }
+                j++;
+            }
+            while(j < n)
+            {
+                freeVariableArray[j++] = 1;
+            }
+            return freeVariableArray;
+
         }
         public static void ReduceToRref(int[][] matrix)
         {
@@ -416,7 +466,7 @@ namespace AdventOfCode25.Solutions
                 {
                     break;
                 }
-                if (matrix[curRow][i] == 0)
+                if (matrix[curRow][i] == 0 )
                 {
                     for(int j = curRow + 1; j < m; j++)
                     {
@@ -426,22 +476,46 @@ namespace AdventOfCode25.Solutions
                             break;
                         }
                     }
+                }
+
+
+                if (matrix[curRow][i] == 0)
+                {
                     continue;
                 }
+
                 for(int j = curRow + 1; j < m; j++)
                 {
                     if (matrix[j][i] != 0)
                     {
-                        int factor = matrix[j][i];
-                        for(int k = i; k < n + 1; k++)
+                        int factorA = matrix[j][i];
+                        int factorB = matrix[curRow][i];
+                        for(int k = 0; k < n + 1; k++)
                         {
                             
-                            matrix[j][k] = matrix[j][k] - factor * matrix[curRow][k]; 
+                            matrix[j][k] = matrix[j][k] * factorB - factorA * matrix[curRow][k]; 
                         }
                     }
                 }
+
+                for(int j = curRow - 1; j >= 0; j--)
+                {
+                    if (matrix[j][i] != 0)
+                    {
+                        int factorA = matrix[j][i];
+                        int factorB = matrix[curRow][i];
+                        for(int k = 0; k < n + 1; k++)
+                        {
+                            matrix[j][k] = matrix[j][k] * factorB -  factorA * matrix[curRow][k];
+                        }
+                    }
+                }
+
+                //Console.WriteLine($"i = {i}, curRow = {curRow}");
+                //WriteMatrix(matrix);
                 curRow++;
             }
+            Console.WriteLine();
             WriteMatrix(matrix);
         }
 
@@ -464,15 +538,20 @@ namespace AdventOfCode25.Solutions
         {
             for (int j = 0; j < matrix.Length; j++)
             {
-                for (int k = 0; k < matrix[j].Length; k++)
-                {
-                    Console.Write(matrix[j][k].ToString().PadLeft(3));
-                    if (k < matrix[j].Length - 1)
-                    {
-                        Console.Write(',');
-                    }
-                }
+                WriteArray(matrix[j]);
                 Console.WriteLine();
+            }
+        }
+
+        public static void WriteArray(int[] array)
+        {
+            for (int k = 0; k < array.Length; k++)
+            {
+                Console.Write(array[k].ToString().PadLeft(3));
+                if (k < array.Length - 1)
+                {
+                    Console.Write(',');
+                }
             }
         }
     }
